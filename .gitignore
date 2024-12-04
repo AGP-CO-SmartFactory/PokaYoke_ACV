@@ -1,0 +1,11 @@
+*.log
+/__pycache__
+*.pyc
+/__pycache__
+/build
+/images
+/images
+/images
+*.xlsx
+ipython.html
+*.json
