@@ -6,6 +6,7 @@ def main(opcion):
     if opcion == "A":
         self=Acv()
         Acv.estado_acv(self)   
+
     elif opcion =="B":
         self=EstadoPiezas() 
         EstadoPiezas.tratamiento_datos(self)
