@@ -79,6 +79,7 @@ class EstadoPiezas:
             ).dt.total_seconds()
             / 60
         ) + 5
+        #print(self.df_merged)
 
     def determinar_criterio(self):
         self.df_merged["Criterio"] = self.df_merged.apply(
@@ -113,6 +114,7 @@ class EstadoPiezas:
         self.limpiar_agp_level()
         self.calcular_tiempo_desaireacion()
         self.determinar_criterio()
+        #print(self.df_merged[self.df_merged["Criterio"]==1]) #Confirmación
         return self.df_merged
 
     def cargar_datos_sql(self):
