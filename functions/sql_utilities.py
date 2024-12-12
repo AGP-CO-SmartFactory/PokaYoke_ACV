@@ -42,21 +42,31 @@ class SqlUtilities:
         engine = sqlalchemy.create_engine(connection_url)
         connection = engine.connect()
         return conn
-
-    def get_database_calendar(query: str):
-        file_path = "data_loader/datos_calendar.json"
-        conn = SqlUtilities.connect_sql(file_path)
-        bd = pd.read_sql(sql=query, con=conn)
-        return bd
-    
-    def get_database_sf(query: str):
-        file_path = "data_loader/datos_sf.json"
-        conn = SqlUtilities.connect_sql(file_path)
-        bd = pd.read_sql(sql=query, con=conn)
-        return bd
     
     def get_database_com(query: str):
         file_path = "data_loader/datos_com.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
+    
+    def get_database_cal(query: str):
+        file_path = "data_loader/datos_calendar.json"
+        conn = SqlUtilities.connect_sql(file_path)
+        bd = pd.read_sql(sql=query, con=conn)
+        return bd
+
+    def get_database_sf(query: str):
+        file_path = "data_loader/datos_sf.json"
+        conn = SqlUtilities.connect_sql(file_path)
+        bd = pd.read_sql(sql=query, con=conn)
+        return bd
+    
+    def insert_database_sf(query: str):
+        file_path = "data_loader/datos_sf_adm.json"
+        conn = SqlUtilities.connect_sql(file_path)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        conn.commit()
+        cursor.close()
+        conn.close()
+

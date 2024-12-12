@@ -10,6 +10,7 @@ def main(opcion):
     elif opcion =="B":
         self=EstadoPiezas() 
         EstadoPiezas.tratamiento_datos(self)
+        #EstadoPiezas.cargar_datos_sql(self)
     else:
         print("Opción no válida.")
         
