@@ -21,8 +21,8 @@ def main(opcion):
 
         self = Cumplimiento_registro_embolsados()
         validas, invalidas = Cumplimiento_registro_embolsados.ejecutar_revision(self)
-
         invalidas.to_excel('invalidas.xlsx', index= False)
+        validas.to_excel('validas.xlsx', indes= False)
 
 
     else:

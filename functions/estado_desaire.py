@@ -110,9 +110,7 @@ class EstadoPiezas:
             'Criterio': 0
         })
         self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
-        self.piezas_desaireadas.to_excel("prueba.xlsx", index = False)
-
-
+    
     def tratamiento_datos(self):
 
         self.filtrar_piezas_cambioestado()
@@ -149,9 +147,11 @@ class AlarmaDesaireacion():
     def filtrar_no_conformidades(self):
         print(f"Cantidad total de piezas registradas {len(self.base_registros_desaireacion)}")
         no_conformidades = self.base_registros_desaireacion[self.base_registros_desaireacion["Criterio"] == 0]
-        print(f"Cantidad de no conformidades registradas {len(no_conformidades)}")
-        
+        print(f"Cantidad de no conformidades registradas {len(no_conformidades)}")        
         self.base_registros_desaireacion.to_excel("prueba.xlsx", index = False)
+    
+    def enviar_correo(self):
+        print("AA")
         
 
 
