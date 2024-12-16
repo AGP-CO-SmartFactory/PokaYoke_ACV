@@ -12,15 +12,10 @@ class EstadoPiezas:
         FROM 
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
-            DATE_NOTIF > DATEADD(day,-2, CAST(GETDATE() AS date))
+            DATE_NOTIF > DATEADD(day,-30, CAST(GETDATE() AS date))
             AND (CLV_MODEL = 'EMBOLSA' OR CLV_MODEL = 'DESAIRE')
             AND ANULADO <> 'X'
             AND CTD_BUENA <> '1.000-'
-            AND Orden NOT IN (
-                SELECT Orden
-                FROM VW_CAMBIOESTADO WITH(NOLOCK)
-                WHERE CLV_MODEL = 'ACV'
-            )
         """
         query_calendario = """SELECT Orden
         FROM 
@@ -30,8 +25,8 @@ class EstadoPiezas:
         self.cambioestado = SqlUtilities.get_database_com(query_cambioestado)
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
     
-    def filtrar_por_calendario(self): #esto con el fin de solo obtener las piezas que estén en el puesto de trabajo
-        self.cambioestado = self.cambioestado[self.cambioestado['Orden'].isin(self.calendario['Orden'])]
+    def filtrar_piezas_cambioestado(self): #esto con el fin de solo obtener las piezas que estén en el puesto de trabajo
+        self.piezas_desaireadas = self.calendario[self.calendario['Orden'].isin(self.cambioestado['Orden'])]
 
     def añadir_columna_datetime(self):
         self.cambioestado["Date_Registro"] = pd.to_datetime(
@@ -102,9 +97,25 @@ class EstadoPiezas:
             axis=1,
         )
 
+    def traer_tiempos_a_calendario(self):
+        self.piezas_desaireadas = self.piezas_desaireadas.merge(self.df_merged, on = 'Orden', how='left')
+        self.piezas_desaireadas = self.piezas_desaireadas.drop_duplicates(subset = ['Orden'], inplace=False)
+        self.piezas_desaireadas = self.piezas_desaireadas.fillna({
+            'Orden': 'NULL',
+            'AGPLevel': '00',
+            'Vehiculo': 'No Encontrado',
+            'Cliente' : 'No Encontrado',
+            'Formula' : 'No Encontrado',
+            'TiemposDesaireacion': 0, 
+            'Criterio': 0
+        })
+        self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
+        self.piezas_desaireadas.to_excel("prueba.xlsx", index = False)
+
+
     def tratamiento_datos(self):
 
-        self.filtrar_por_calendario()
+        self.filtrar_piezas_cambioestado()
         self.añadir_columna_datetime()
         self.crear_dataframe_embolsado()
         self.crear_dataframe_desaire()
@@ -113,16 +124,34 @@ class EstadoPiezas:
         self.limpiar_agp_level()
         self.calcular_tiempo_desaireacion()
         self.determinar_criterio()
-        return self.df_merged
+        self.traer_tiempos_a_calendario()
+        return self.piezas_desaireadas
 
     def cargar_datos_sql(self):
 
         truncatequery = "TRUNCATE TABLE SF_DesaireacionPiezas"
         SqlUtilities.insert_database_sf(truncatequery)
 
-        for _, row in self.df_merged.iterrows():
+        for _, row in self.piezas_desaireadas.iterrows():
             query =  f"""
             INSERT INTO SF_DesaireacionPiezas (Orden, NivelAGP, Vehiculo, TiemposDesaireacion, Criterio)
             VALUES ({row['Orden']}, {row['AGPLevel']}, '{row['Vehiculo']}', {row['TiemposDesaireacion']}, '{row['Criterio']}')
-        """
+            """
             SqlUtilities.insert_database_sf(query)
+
+
+class AlarmaDesaireacion():
+
+    def __init__(self):
+        query = "SELECT * FROM SF_DesaireacionPiezas"
+        self.base_registros_desaireacion = SqlUtilities.get_database_sf(query)
+    
+    def filtrar_no_conformidades(self):
+        print(f"Cantidad total de piezas registradas {len(self.base_registros_desaireacion)}")
+        no_conformidades = self.base_registros_desaireacion[self.base_registros_desaireacion["Criterio"] == 0]
+        print(f"Cantidad de no conformidades registradas {len(no_conformidades)}")
+        
+        self.base_registros_desaireacion.to_excel("prueba.xlsx", index = False)
+        
+
+
