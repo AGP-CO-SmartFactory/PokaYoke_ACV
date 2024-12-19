@@ -10,7 +10,8 @@ def main(opcion):
 
     elif opcion =="EstadoPiezas":
         self=EstadoPiezas() 
-        EstadoPiezas.tratamiento_datos(self)
+        estado = EstadoPiezas.tratamiento_datos(self)
+        estado.to_excel("prueba.xlsx", index=False)
         EstadoPiezas.cargar_datos_sql(self)
     
     elif opcion =="NoConformidades":

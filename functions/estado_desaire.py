@@ -8,16 +8,16 @@ warnings.filterwarnings('ignore')
 class EstadoPiezas:
 
     def __init__(self):
-        query_cambioestado = """SELECT Orden, AGPLevel, TXT_MATERIAL, DATE_NOTIF, HRA_NOTIF, CLV_MODEL, DESC_CLIENTE, FormulaCOD 
+        query_cambioestado = """SELECT CAST(Orden AS INT) AS Orden, AGPLevel, TXT_MATERIAL, DATE_NOTIF, HRA_NOTIF, CLV_MODEL, DESC_CLIENTE, FormulaCOD 
         FROM 
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
-            DATE_NOTIF > DATEADD(day,-30, CAST(GETDATE() AS date))
+            DATE_NOTIF > DATEADD(day,-7, CAST(GETDATE() AS date))
             AND (CLV_MODEL = 'EMBOLSA' OR CLV_MODEL = 'DESAIRE')
             AND ANULADO <> 'X'
             AND CTD_BUENA <> '1.000-'
         """
-        query_calendario = """SELECT Orden
+        query_calendario = """SELECT CAST(Orden AS INT) AS Orden, NivelAGP, Vehiculo, FechaRegistro, ClienteDespacho, Formula
         FROM 
             TCAL_CALENDARIO_COLOMBIA_DIRECT
         WHERE 
@@ -41,19 +41,17 @@ class EstadoPiezas:
         )
 
     def crear_dataframe_desaire(self):
-        self.df_desaire = self.cambioestado[
-            self.cambioestado["CLV_MODEL"] == "DESAIRE"
-        ][["Orden", "AGPLevel", "TXT_MATERIAL", "Date_Registro", 'DESC_CLIENTE', 'FormulaCOD']].rename(
-            columns={"Date_Registro": "RegistroDesaire"}
+        self.df_desaire = self.calendario[["Orden", "NivelAGP", "Vehiculo", "FechaRegistro", 'ClienteDespacho', 'Formula']].rename(
+            columns={"FechaRegistro": "RegistroDesaire", "ClienteDespacho" : "Cliente"}
         )
 
     def merge_dataframes(self):
         self.df_merged = pd.merge(
             self.df_embolsado, self.df_desaire, on="Orden", how="left"
         )
-        self.df_merged.drop(columns=["TXT_MATERIAL_y", "AGPLevel_y", "DESC_CLIENTE_y", "FormulaCOD_y"], inplace=True)
+        self.df_merged.drop(columns=["TXT_MATERIAL", "DESC_CLIENTE"], inplace=True)
         self.df_merged.rename(
-            columns={"AGPLevel_x": "AGPLevel", "TXT_MATERIAL_x": "Vehiculo", "DESC_CLIENTE_x" : "Cliente", "FormulaCOD_x":"Formula"},
+            columns={"NivelAGP_x": "AGPLevel", "Vehiculo_x": "Vehiculo", "FormulaCOD":"Formula"},
             inplace=True,
         )
 
@@ -88,10 +86,10 @@ class EstadoPiezas:
                     row["Cliente"].startswith("BENTELER")
                     and row["TiemposDesaireacion"] < 120
                 )
-                or (
-                    row["Formula"].startswith("LL")
-                    and row["TiemposDesaireacion"] < 120
-                )
+                #or (
+                    #row["Formula"].startswith("LL")
+                    #and row["TiemposDesaireacion"] < 120
+                #)
                 else 1
             ),
             axis=1,
@@ -111,6 +109,13 @@ class EstadoPiezas:
         })
         self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
     
+    def limpiar_duplicados_tabla(self):
+        self.piezas_desaireadas.drop(columns=["NivelAGP_x", "FechaRegistro", "ClienteDespacho", "Formula_y", "NivelAGP_y", "Vehiculo_y"], inplace=True)
+        self.piezas_desaireadas.rename(
+            columns={"Vehiculo_x": "Vehiculo", "Formula_x":"Formula"},
+            inplace=True,
+        )
+
     def tratamiento_datos(self):
 
         self.filtrar_piezas_cambioestado()
@@ -123,6 +128,7 @@ class EstadoPiezas:
         self.calcular_tiempo_desaireacion()
         self.determinar_criterio()
         self.traer_tiempos_a_calendario()
+        self.limpiar_duplicados_tabla()
         return self.piezas_desaireadas
 
     def cargar_datos_sql(self):
