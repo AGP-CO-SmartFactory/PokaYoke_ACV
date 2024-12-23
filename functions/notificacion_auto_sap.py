@@ -18,13 +18,6 @@ class auto_sap():
                 return True
         return False
     
-    def start_sap(self):
-        if self.sap_app_verification():
-            os.startfile(r'C:\Program Files (x86)\SAP\FrontEnd\SapGui\saplogon.exe') #Buscar ruta SAP pc destino
-        else:
-            os.startfile(r'C:\Program Files (x86)\SAP\FrontEnd\SapGui\saplogon.exe') #Buscar ruta SAP pc destino
-            time.sleep(10)
-
     def sap_connection(self):
         SapGuiAuto = win32com.client.GetObject('SAPGUI')
         application = SapGuiAuto.GetScriptingEngine
@@ -32,6 +25,35 @@ class auto_sap():
         self.session = connection.Children(0)
         return self.session
         #Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script
+    
+    def sap_connection_login(self):
+        SapGuiAuto = win32com.client.GetObject('SAPGUI')
+        application = SapGuiAuto.GetScriptingEngine
+        connection = application.OpenConnection('AGP ERP PRD O2', True)
+        self.session = connection.Children(0)
+        return self.session
+        #Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script
+
+    def start_sap(self):
+        if self.sap_app_verification():
+            print("sap ya iniciado")
+            self.sap_connection_login()
+            self.session.findById("wnd[0]").maximize()
+            self.session.findById("wnd[0]/usr/txtRSYST-BNAME").text = "DBARENO"
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").text = "Dibar461...."
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").setFocus()
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").caretPosition = 8
+            self.session.findById("wnd[0]").sendVKey (0)
+        else:
+            os.startfile(r'C:\Program Files (x86)\SAP\FrontEnd\SapGui\saplogon.exe') #Buscar ruta SAP pc destino
+            time.sleep(10)
+            self.sap_connection_login()
+            self.session.findById("wnd[0]").maximize()
+            self.session.findById("wnd[0]/usr/txtRSYST-BNAME").text = "DBARENO"
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").text = "Dibar461...."
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").setFocus()
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").caretPosition = 8
+            self.session.findById("wnd[0]").sendVKey (0)
 
     def consulta_fin_turno(self):
         self.session.findById("wnd[0]").maximize()
@@ -49,8 +71,10 @@ class auto_sap():
 
     
     def ejecutar(self):
+
+        
         self.start_sap()
-        self.sap_connection()
+        self.sap_connection()  
         self.consulta_fin_turno()
     
 
