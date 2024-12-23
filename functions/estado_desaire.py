@@ -86,10 +86,10 @@ class EstadoPiezas:
                     row["Cliente"].startswith("BENTELER")
                     and row["TiemposDesaireacion"] < 120
                 )
-                #or (
-                    #row["Formula"].startswith("LL")
-                    #and row["TiemposDesaireacion"] < 120
-                #)
+                or (
+                    str(row["Formula"]).startswith("LL")
+                    and row["TiemposDesaireacion"] < 120
+                )
                 else 1
             ),
             axis=1,
@@ -130,9 +130,8 @@ class EstadoPiezas:
         self.traer_tiempos_a_calendario()
         self.limpiar_duplicados_tabla()
         return self.piezas_desaireadas
-
+    
     def cargar_datos_sql(self):
-
         truncatequery = "TRUNCATE TABLE SF_DesaireacionPiezas"
         SqlUtilities.insert_database_sf(truncatequery)
 
