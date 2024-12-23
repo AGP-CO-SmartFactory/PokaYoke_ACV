@@ -1,9 +1,4 @@
-import sys
-from functions.consulta_ACV import Acv
-from functions.estado_desaire import EstadoPiezas, AlarmaDesaireacion
-from functions.verificar_historico_embolsado import Cumplimiento_registro_embolsados
-from functions.send_email import SendEmail
-from functions.notificacion_auto_sap import auto_sap
+from data_loader.importer import *
 
 def main(opcion):
     if opcion == "EstadoACV":
