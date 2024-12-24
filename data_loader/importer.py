@@ -8,7 +8,7 @@ from functions.consulta_ACV import Acv
 from functions.estado_desaire import EstadoPiezas, AlarmaDesaireacion
 from functions.send_email import SendEmail
 
-#Funciones para verificar erroes
+#Funciones para verificar errores en registros
 from functions.verificar_historico_embolsado import Cumplimiento_registro_embolsados
 
 #Funciones para automatizar SAP
