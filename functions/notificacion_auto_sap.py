@@ -9,7 +9,7 @@ import time
 
 # Esta clase se encarga de realizar la lectura de la base de datos transicional resultante de
 # la powerapp de desaireación, para luego ejecutar de manera automática todas las notificaciones
-# automaticas de las ordenes para el puesto de trabajo 15EMBOL KeyModel DESAIRE.
+# de las ordenes para el puesto de trabajo 15EMBOL KeyModel DESAIRE.
 
 
 class auto_sap:
@@ -22,6 +22,14 @@ class auto_sap:
             ):
                 return True
         return False
+    
+    def sap_connection_login(self):
+        SapGuiAuto = win32com.client.GetObject("SAPGUI")
+        application = SapGuiAuto.GetScriptingEngine
+        connection = application.OpenConnection("QAS 2023", True)
+        self.session = connection.Children(0)
+        return self.session
+        # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script para iniciar sesion
 
     def sap_connection(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
@@ -29,15 +37,8 @@ class auto_sap:
         connection = application.Children(0)
         self.session = connection.Children(0)
         return self.session
-        # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script
+        # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script luego de iniciar sesion
 
-    def sap_connection_login(self):
-        SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        application = SapGuiAuto.GetScriptingEngine
-        connection = application.OpenConnection("QAS 2023", True)
-        self.session = connection.Children(0)
-        return self.session
-        # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script
 
     def start_sap(self):
         if self.sap_app_verification():
