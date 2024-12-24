@@ -31,14 +31,6 @@ class auto_sap:
         return self.session
         # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script para iniciar sesion
 
-    def sap_connection(self):
-        SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
-        self.session = connection.Children(0)
-        return self.session
-        # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script luego de iniciar sesion
-
     def start_sap(self):
         if self.sap_app_verification():
             print("sap ya iniciado")
