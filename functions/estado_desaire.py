@@ -13,7 +13,7 @@ class EstadoPiezas:
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
             DATE_NOTIF > DATEADD(day,-7, CAST(GETDATE() AS date))
-            AND (CLV_MODEL = 'EMBOLSA' OR CLV_MODEL = 'DESAIRE')
+            AND (CLV_MODEL = 'EMBOLSA')
             AND ANULADO <> 'X'
             AND CTD_BUENA <> '1.000-'
         """
@@ -21,7 +21,8 @@ class EstadoPiezas:
         FROM 
             TCAL_CALENDARIO_COLOMBIA_DIRECT
         WHERE 
-            KeyModel = 'DESAIRE'"""
+            KeyModel = 'DESAIRE'
+            AND Vehiculo NOT LIKE '%PROBETAS%' """
         self.cambioestado = SqlUtilities.get_database_com(query_cambioestado)
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
     
