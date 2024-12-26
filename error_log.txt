@@ -1,1 +1,3 @@
 
+2024-12-26 17:07:29,072 - ERROR - {'class': 'auto_sap', 'method': 'crear_notificacion_pieza_desaire', 'error_message': "(-2147352567, 'Ocurrió una excepción.', (619, 'SAP Frontend Server', 'The control could not be found by id.', 'C:\\\\Program Files (x86)\\\\SAP\\\\FrontEnd\\\\SapGui\\\\sapfront.HLP', 393215, 0), None)", 'timestamp': '2024-12-26T17:07:29.072274'}
+2024-12-26 17:07:29,072 - ERROR - {'class': 'auto_sap', 'method': 'ejecutar', 'error_message': "(-2147352567, 'Ocurrió una excepción.', (619, 'SAP Frontend Server', 'The control could not be found by id.', 'C:\\\\Program Files (x86)\\\\SAP\\\\FrontEnd\\\\SapGui\\\\sapfront.HLP', 393215, 0), None)", 'timestamp': '2024-12-26T17:07:29.072274'}
