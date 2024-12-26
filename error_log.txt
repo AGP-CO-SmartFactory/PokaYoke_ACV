@@ -1,6 +1,1 @@
-Error in crear_dataframe_embolsado: 'CL_MODEL'
-Error in merge_dataframes: 'EstadoPiezas' object has no attribute 'df_embolsado'
-Error in filtrar_merged: 'EstadoPiezas' object has no attribute 'df_merged'
-Error in calcular_tiempo_desaireacion: 'EstadoPiezas' object has no attribute 'df_merged'
-Error in determinar_criterio: 'EstadoPiezas' object has no attribute 'df_merged'
-Error in tratamiento_datos: 'EstadoPiezas' object has no attribute 'df_merged'
+
