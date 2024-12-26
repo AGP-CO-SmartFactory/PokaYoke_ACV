@@ -1,8 +1,7 @@
 import pandas as pd
 import win32com.client  # Para acceder a SAP y ejecuta el script
 import psutil  # Para verificar apps abiertas
-# from datetime import datetime
-# import subprocess
+from functions.consulta_desaire_pwapp import BdPowerApp
 import os
 import time
 
@@ -10,7 +9,17 @@ import time
 # la powerapp de desaireación, para luego ejecutar de manera automática todas las notificaciones
 # de las ordenes para el puesto de trabajo 15EMBOL KeyModel DESAIRE.
 
+
 class auto_sap:
+
+    def __init__(self):
+        self.df_sin_cargar = pd.DataFrame(
+            BdPowerApp.piezas_sin_cargar(self=BdPowerApp())
+        )
+        if self.df_sin_cargar.empty:
+            raise ValueError(
+                "No hay piezas sin cargar en SAP."
+            )  #Excepción para detener la ejecución
 
     def sap_app_verification(self):
         for process in psutil.process_iter(["name"]):
@@ -20,7 +29,7 @@ class auto_sap:
             ):
                 return True
         return False
-    
+
     def sap_connection_login(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
@@ -51,7 +60,7 @@ class auto_sap:
             self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").setFocus()
             self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").caretPosition = 8
             self.session.findById("wnd[0]").sendVKey(0)
-        
+
     def sap_connection(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
@@ -69,7 +78,7 @@ class auto_sap:
             "wnd[0]/tbar[0]/btn[0]"
         ).press()  # Presiona ejecutar (se puede oprimir enter tambien)
 
-    def seleccion_pto_trabajo(self, id_operario = '108484'):
+    def seleccion_pto_trabajo(self, id_operario):
         self.session.findById("wnd[0]/usr/ctxtP_WERKS").text = "CO01"
         self.session.findById("wnd[0]/usr/ctxtP_ARBPL").text = "15EMBOL"
         self.session.findById("wnd[0]/usr/ctxtP_PERNR").text = (
@@ -84,7 +93,7 @@ class auto_sap:
             "wnd[0]/tbar[1]/btn[8]"
         ).press()  # Segundo click a ejecutar, da ingreso a nueva ventana
 
-    def crear_notificacion_pieza_desaire(self, pieza = '11018280'):
+    def crear_notificacion_pieza_desaire(self, pieza):
         self.session.findById(
             "wnd[0]/tbar[1]/btn[5]"
         ).press()  # Click agregar registros
@@ -98,7 +107,7 @@ class auto_sap:
             "wnd[1]/tbar[0]/btn[0]"
         ).press()  # Da click a confimar enviar registro
         self.session.findById("wnd[0]").sendVKey(0)  # Presiona enter
-    
+
     def guardar_notificaciones(self):
         self.session.findById("wnd[0]/tbar[0]/btn[11]").press()  # Clickea guardar
         self.session.findById(
@@ -107,16 +116,33 @@ class auto_sap:
         self.session.findById(
             "wnd[1]/tbar[0]/btn[0]"
         ).press()  # Click a confirmar log de ejecución
+        self.session.findById(
+            "wnd[0]/tbar[0]/btn[15]"
+        ).press()  # Click a flecha arriba amarilla regresar
+        self.session.findById(
+            "wnd[0]/tbar[0]/btn[15]"
+        ).press()  # Click a flecha arriba amarilla para salir de trx
 
     def salir_sistema(self):
-        self.session.findById("wnd[0]/mbar/menu[0]/menu[11]").select()
+        self.session.findById("wnd[0]/mbar/menu[4]/menu[11]").select()
         self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
 
     def ejecutar(self):
         self.start_sap()
         self.sap_connection()
-        self.seleccionar_trx()
-        self.seleccion_pto_trabajo()
-        self.crear_notificacion_pieza_desaire() #Se tiene que ajustar para realizar notificaciones de un df
-        self.guardar_notificaciones()
+        for id_operario in self.df_sin_cargar[
+            "Id_operario"
+        ].unique():  # agrupar las ordenes por operario y cargarlas juntas
+            self.seleccionar_trx()
+            self.seleccion_pto_trabajo(id_operario)
+            piezas = self.df_sin_cargar[
+                self.df_sin_cargar["Id_operario"] == id_operario
+            ]
+            primary_keys = piezas["id"].tolist()
+            for _, pieza in piezas.iterrows():
+                self.crear_notificacion_pieza_desaire(pieza=pieza["Orden"])
+            self.guardar_notificaciones()
+            BdPowerApp.modificar_estado_cargue_sap(
+                primary_keys
+            )  # actualiza bd para confirmar cargue SAP
         self.salir_sistema()
