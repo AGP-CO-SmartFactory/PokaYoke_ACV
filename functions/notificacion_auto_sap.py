@@ -1,7 +1,8 @@
+from functions.consulta_desaire_pwapp import BdPowerApp
+from functions.log_manager import LogManager
 import pandas as pd
 import win32com.client  # Para acceder a SAP y ejecuta el script
 import psutil  # Para verificar apps abiertas
-from functions.consulta_desaire_pwapp import BdPowerApp
 import os
 import time
 
@@ -9,18 +10,22 @@ import time
 # la powerapp de desaireación, para luego ejecutar de manera automática todas las notificaciones
 # de las ordenes para el puesto de trabajo 15EMBOL KeyModel DESAIRE.
 
+log_manager = LogManager()
 
 class auto_sap:
 
+    @log_manager.log_errors
     def __init__(self):
+        self.self_papp = BdPowerApp()
         self.df_sin_cargar = pd.DataFrame(
-            BdPowerApp.piezas_sin_cargar(self=BdPowerApp())
+            BdPowerApp.piezas_sin_cargar(self.self_papp)
         )
         if self.df_sin_cargar.empty:
             raise ValueError(
                 "No hay piezas sin cargar en SAP."
             )  #Excepción para detener la ejecución
 
+    @log_manager.log_errors
     def sap_app_verification(self):
         for process in psutil.process_iter(["name"]):
             if (
@@ -30,6 +35,7 @@ class auto_sap:
                 return True
         return False
 
+    @log_manager.log_errors
     def sap_connection_login(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
@@ -38,6 +44,7 @@ class auto_sap:
         return self.session
         # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script para iniciar sesion
 
+    @log_manager.log_errors
     def start_sap(self):
         if self.sap_app_verification():
             print("sap ya iniciado")
@@ -61,6 +68,7 @@ class auto_sap:
             self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").caretPosition = 8
             self.session.findById("wnd[0]").sendVKey(0)
 
+    @log_manager.log_errors
     def sap_connection(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
@@ -69,6 +77,7 @@ class auto_sap:
         return self.session
         # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script luego de iniciar sesion
 
+    @log_manager.log_errors
     def seleccionar_trx(self):
         self.session.findById("wnd[0]").maximize()
         self.session.findById("wnd[0]/tbar[0]/okcd").text = (
@@ -78,6 +87,7 @@ class auto_sap:
             "wnd[0]/tbar[0]/btn[0]"
         ).press()  # Presiona ejecutar (se puede oprimir enter tambien)
 
+    @log_manager.log_errors
     def seleccion_pto_trabajo(self, id_operario):
         self.session.findById("wnd[0]/usr/ctxtP_WERKS").text = "CO01"
         self.session.findById("wnd[0]/usr/ctxtP_ARBPL").text = "15EMBOL"
@@ -93,6 +103,7 @@ class auto_sap:
             "wnd[0]/tbar[1]/btn[8]"
         ).press()  # Segundo click a ejecutar, da ingreso a nueva ventana
 
+    @log_manager.log_errors
     def crear_notificacion_pieza_desaire(self, pieza):
         self.session.findById(
             "wnd[0]/tbar[1]/btn[5]"
@@ -108,6 +119,7 @@ class auto_sap:
         ).press()  # Da click a confimar enviar registro
         self.session.findById("wnd[0]").sendVKey(0)  # Presiona enter
 
+    @log_manager.log_errors
     def guardar_notificaciones(self):
         self.session.findById("wnd[0]/tbar[0]/btn[11]").press()  # Clickea guardar
         self.session.findById(
@@ -123,10 +135,12 @@ class auto_sap:
             "wnd[0]/tbar[0]/btn[15]"
         ).press()  # Click a flecha arriba amarilla para salir de trx
 
+    @log_manager.log_errors
     def salir_sistema(self):
         self.session.findById("wnd[0]/mbar/menu[4]/menu[11]").select()
         self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
 
+    @log_manager.log_errors
     def ejecutar(self):
         self.start_sap()
         self.sap_connection()
@@ -142,7 +156,7 @@ class auto_sap:
             for _, pieza in piezas.iterrows():
                 self.crear_notificacion_pieza_desaire(pieza=pieza["Orden"])
             self.guardar_notificaciones()
-            BdPowerApp.modificar_estado_cargue_sap(
-                primary_keys
+            BdPowerApp().modificar_estado_cargue_sap(
+                self.self_papp, primary_keys
             )  # actualiza bd para confirmar cargue SAP
         self.salir_sistema()

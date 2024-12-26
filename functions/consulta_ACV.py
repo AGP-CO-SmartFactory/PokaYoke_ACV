@@ -1,13 +1,14 @@
 from functions.sql_utilities import SqlUtilities
-import pandas as pd
-import traceback
-
+from functions.log_manager import LogManager
 
 # Esta clase lee desde la base de datos, el estado de la ultima receta de las ACV
 # Puede retornar un dataframe con valores booleanos
 
+log_manager = LogManager()
+
 class Acv:
 
+    @log_manager.log_errors
     def __init__(self):
         query = """SELECT * 
         FROM SF_CiclosLaminado WITH(NOLOCK)
@@ -15,6 +16,7 @@ class Acv:
         self.estados_acv = SqlUtilities.get_database_sf(query)
         # print(self.estados_acv) #Confirmación
 
+    @log_manager.log_errors
     def estado_acv(self):
         acv_ultimo_estado = self.estados_acv.loc[
             self.estados_acv.groupby("ID_acv")["Hora"].idxmax()

@@ -1,9 +1,12 @@
+from functions.log_manager import LogManager
 from email.message import EmailMessage
 import smtplib
 
+log_manager = LogManager()
 
 class SendEmail:
 
+    @log_manager.log_errors
     def mail_nc_acv(tabla_nc):
 
         tabla_nc = tabla_nc.to_html(index=False, border=1, justify="center")

@@ -1,16 +1,15 @@
 from functions.sql_utilities import SqlUtilities
-import pandas as pd
-
-# imports para pruebas de codigo
-from datetime import datetime
+from functions.log_manager import LogManager
 
 # Esta clase lee desde la base de datos de registro de salida de desaire para retornar
 # un dataframe que me permita hacer el registro de múltiples órdenes aprobadas a la
 # salida de embolsado
 
+log_manager = LogManager()
 
 class BdPowerApp:
 
+    @log_manager.log_errors
     def piezas_sin_cargar(self):
         query = """SELECT * 
         FROM SF_Cargue_SAP_Desaire WITH(NOLOCK)
@@ -20,7 +19,8 @@ class BdPowerApp:
         self.piezas_sin_cargue_SAP = SqlUtilities.get_database_sf(query)
         return self.piezas_sin_cargue_SAP
 
-    def modificar_estado_cargue_sap(primary_keys):
+    @log_manager.log_errors
+    def modificar_estado_cargue_sap(self, primary_keys):
         primary_keys_str = ",".join([str(key) for key in primary_keys])
         query = f""" UPDATE SF_Cargue_SAP_Desaire
         SET Cargado_SAP = 1, Fecha_cargue_SAP = GETDATE()

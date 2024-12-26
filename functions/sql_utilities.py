@@ -1,11 +1,15 @@
+from functions.log_manager import LogManager
 import sqlalchemy
 from sqlalchemy import create_engine
 import pyodbc
 import os, sys, json, warnings
 import pandas as pd
 
+log_manager = LogManager()
 
 class SqlUtilities:
+    
+    @log_manager.log_errors
     def connect_sql(credenciales):
 
         with open(credenciales, "r") as file:
@@ -43,24 +47,28 @@ class SqlUtilities:
         connection = engine.connect()
         return conn
     
+    @log_manager.log_errors
     def get_database_com(query: str):
         file_path = "data_loader/datos_com.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
     
+    @log_manager.log_errors
     def get_database_cal(query: str):
         file_path = "data_loader/datos_calendar.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
 
+    @log_manager.log_errors
     def get_database_sf(query: str):
         file_path = "data_loader/datos_sf.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
     
+    @log_manager.log_errors
     def insert_database_sf(query: str):
         file_path = "data_loader/datos_sf_adm.json"
         conn = SqlUtilities.connect_sql(file_path)
