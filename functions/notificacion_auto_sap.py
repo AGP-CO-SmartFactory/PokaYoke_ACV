@@ -157,6 +157,6 @@ class auto_sap:
                 self.crear_notificacion_pieza_desaire(pieza=pieza["Orden"])
             self.guardar_notificaciones()
             BdPowerApp().modificar_estado_cargue_sap(
-                self.self_papp, primary_keys
+                primary_keys
             )  # actualiza bd para confirmar cargue SAP
         self.salir_sistema()
