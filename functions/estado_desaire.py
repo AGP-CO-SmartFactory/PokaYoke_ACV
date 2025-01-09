@@ -10,7 +10,6 @@ log_manager = LogManager()
 
 class EstadoPiezas:
 
-    @log_manager.log_errors
     def __init__(self):
         query_cambioestado = """SELECT CAST(Orden AS INT) AS Orden, AGPLevel, TXT_MATERIAL, DATE_NOTIF, HRA_NOTIF, CLV_MODEL, DESC_CLIENTE, FormulaCOD 
         FROM 
@@ -27,20 +26,25 @@ class EstadoPiezas:
         WHERE 
             KeyModel = 'DESAIRE'
             AND Vehiculo NOT LIKE '%PROBETAS%' """
+        query_retrabajos = """SELECT CAST(Orden AS INT) AS Orden
+        FROM 
+            VW_CAMBIOESTADO WITH(NOLOCK)
+        WHERE 
+            DATE_NOTIF > DATEADD(day,-30, CAST(GETDATE() AS date))
+            AND DEFECTO LIKE '%Resistencia fuera de tolerancia%'
+            AND TIPO_NOTIF <> 'RECHAZO' """
         self.cambioestado = SqlUtilities.get_database_com(query_cambioestado)
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
-    
-    @log_manager.log_errors
+        self.retrabajos = SqlUtilities.get_database_com(query_retrabajos)
+
     def filtrar_piezas_cambioestado(self): #esto con el fin de solo obtener las piezas que estén en el puesto de trabajo
         self.piezas_desaireadas = self.calendario[self.calendario['Orden'].isin(self.cambioestado['Orden'])]
 
-    @log_manager.log_errors
     def añadir_columna_datetime(self):
         self.cambioestado["Date_Registro"] = pd.to_datetime(
             self.cambioestado["DATE_NOTIF"] + " " + self.cambioestado["HRA_NOTIF"]
         )
 
-    @log_manager.log_errors
     def crear_dataframe_embolsado(self):
         self.df_embolsado = self.cambioestado[
             self.cambioestado["CLV_MODEL"] == "EMBOLSA"
@@ -48,13 +52,12 @@ class EstadoPiezas:
             columns={"Date_Registro": "RegistroEmbolsa"}
         )
 
-    @log_manager.log_errors
     def crear_dataframe_desaire(self):
         self.df_desaire = self.calendario[["Orden", "NivelAGP", "Vehiculo", "FechaRegistro", 'ClienteDespacho', 'Formula']].rename(
             columns={"FechaRegistro": "RegistroDesaire", "ClienteDespacho" : "Cliente"}
         )
 
-    @log_manager.log_errors
+
     def merge_dataframes(self):
         self.df_merged = pd.merge(
             self.df_embolsado, self.df_desaire, on="Orden", how="left"
@@ -65,19 +68,16 @@ class EstadoPiezas:
             inplace=True,
         )
 
-    @log_manager.log_errors
     def filtrar_merged(self):
         self.df_merged = self.df_merged[
             (self.df_merged["RegistroDesaire"].notnull())
             & (self.df_merged["RegistroDesaire"] > self.df_merged["RegistroEmbolsa"])
         ]
 
-    @log_manager.log_errors
     def limpiar_agp_level(self):
         self.df_merged['AGPLevel'] = self.df_merged['AGPLevel'].replace('NA', None)
         self.df_merged = self.df_merged.dropna(subset=['AGPLevel'])
 
-    @log_manager.log_errors
     def calcular_tiempo_desaireacion(self):
         self.df_merged["TiemposDesaireacion"] = (
             (
@@ -86,11 +86,13 @@ class EstadoPiezas:
             / 60
         ) + 5
 
-    @log_manager.log_errors
     def determinar_criterio(self):
+        ordenes_retrabajos = set(self.retrabajos['Orden'])
         self.df_merged["Criterio"] = self.df_merged.apply(
             lambda row: (
-                0
+                1 
+                if row["Orden"] in ordenes_retrabajos
+                else 0
                 if (row["AGPLevel"] > "04" and row["TiemposDesaireacion"] < 120)
                 or (
                     row["Cliente"].startswith("URO")
@@ -109,7 +111,6 @@ class EstadoPiezas:
             axis=1,
         )
 
-    @log_manager.log_errors
     def traer_tiempos_a_calendario(self):
         self.piezas_desaireadas = self.piezas_desaireadas.merge(self.df_merged, on = 'Orden', how='left')
         self.piezas_desaireadas = self.piezas_desaireadas.drop_duplicates(subset = ['Orden'], inplace=False)
@@ -123,8 +124,7 @@ class EstadoPiezas:
             'Criterio': 0
         })
         self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
-    
-    @log_manager.log_errors
+
     def limpiar_duplicados_tabla(self):
         self.piezas_desaireadas.drop(columns=["NivelAGP_x", "FechaRegistro", "ClienteDespacho", "Formula_y", "NivelAGP_y", "Vehiculo_y"], inplace=True)
         self.piezas_desaireadas.rename(
@@ -132,7 +132,7 @@ class EstadoPiezas:
             inplace=True,
         )
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def tratamiento_datos(self):
 
         self.filtrar_piezas_cambioestado()
@@ -148,7 +148,7 @@ class EstadoPiezas:
         self.limpiar_duplicados_tabla()
         return self.piezas_desaireadas
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Estado desaireación_BD_temporal')
     def cargar_datos_sql(self):
         truncatequery = "TRUNCATE TABLE SF_DesaireacionPiezas"
         SqlUtilities.insert_database_sf(truncatequery)
@@ -163,12 +163,12 @@ class EstadoPiezas:
 
 class AlarmaDesaireacion():
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Alarma desaireación')
     def __init__(self):
         query = "SELECT * FROM SF_DesaireacionPiezas"
         self.base_registros_desaireacion = SqlUtilities.get_database_sf(query)
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Alarma desaireación')
     def filtrar_no_conformidades(self):
         no_conformidades = self.base_registros_desaireacion[self.base_registros_desaireacion["Criterio"] == 0]     
         return no_conformidades
