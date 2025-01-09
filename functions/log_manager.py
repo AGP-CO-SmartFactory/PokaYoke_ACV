@@ -18,42 +18,39 @@ class LogManager:
         )
         self.logger = logging.getLogger(__name__)
 
-    def log_errors(self, func):
-        #Decorador para registrar errores de una función o método.
-        #Args:
-            #func (callable): La función que será decorada.
-        #Returns:
-            #callable: Función decorada que incluye manejo de errores.
+    def log_errors(self, sector="Sector Indefinido"): 
+            #Si no se le da el parametro sector, tendrá valor predeterminado "Sector indefinido"
+            #decorador parametrizado para registrar errores con información del sector
+            def decorator(func):
+                @wraps(func)
+                def wrapper(*args, **kwargs):
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        #obtener información básica del error
+                        class_name = args[0].__class__.__name__ if args else 'Global'
+                        method_name = func.__name__
+                        error_message = str(e)
+                        timestamp = datetime.now()
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                # Obtener información básica del error
-                class_name = args[0].__class__.__name__ if args else 'Global'
-                method_name = func.__name__
-                error_message = str(e)
-                timestamp = datetime.now()
+                        #crear un diccionario para MongoDB
+                        error_document = {
+                            "Sector": sector,
+                            "Proceso": f"{class_name}.{method_name}",
+                            "Anomalia": "Se ha producido una excepción en el código",
+                            "Error": error_message,
+                            "FechaCreacion": timestamp.isoformat(),
+                        }
 
-                # Crear un diccionario para MongoDB
-                error_document = {
-                    "Sector": "Undefined Sector",  # Sector puede ser dinámico si tienes acceso al contexto
-                    "Proceso": f"{class_name}.{method_name}",
-                    "Anomalia": "Se ha producido una excepción en el código",
-                    "Error": error_message,
-                    "FechaCreacion": timestamp.isoformat(),  # ISO 8601 para compatibilidad
-                }
+                        #loguear el error en archivo
+                        self.logger.error(f"{error_document}")
 
-                # Loguear el error en archivo
-                self.logger.error(f"{error_document}")
+                        #collection.insert_one(error_document)
 
-                # Podrías insertar aquí la lógica para guardar en MongoDB si está configurado
-                # e.g., collection.insert_one(error_document)
-
-                raise e  # Re-lanzar la excepción
-        return wrapper
-    
+                        raise e  #Re-lanzar la excepción
+                return wrapper
+            return decorator
+        
 
 
 
