@@ -9,7 +9,7 @@ log_manager = LogManager()
 
 class SqlUtilities:
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Utilidades SQL')
     def connect_sql(credenciales):
 
         with open(credenciales, "r") as file:
@@ -47,28 +47,28 @@ class SqlUtilities:
         connection = engine.connect()
         return conn
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Utilidades SQL')
     def get_database_com(query: str):
         file_path = "data_loader/datos_com.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Utilidades SQL')
     def get_database_cal(query: str):
         file_path = "data_loader/datos_calendar.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Utilidades SQL')
     def get_database_sf(query: str):
         file_path = "data_loader/datos_sf.json"
         conn = SqlUtilities.connect_sql(file_path)
         bd = pd.read_sql(sql=query, con=conn)
         return bd
     
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Utilidades SQL')
     def insert_database_sf(query: str):
         file_path = "data_loader/datos_sf_adm.json"
         conn = SqlUtilities.connect_sql(file_path)

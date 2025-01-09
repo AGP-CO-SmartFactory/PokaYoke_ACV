@@ -6,7 +6,7 @@ log_manager = LogManager()
 
 class SendEmail:
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Enviar Email')
     def mail_nc_acv(tabla_nc):
 
         tabla_nc = tabla_nc.to_html(index=False, border=1, justify="center")

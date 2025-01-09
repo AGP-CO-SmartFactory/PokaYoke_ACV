@@ -8,7 +8,7 @@ log_manager = LogManager()
 
 class Acv:
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Estados ACV')
     def __init__(self):
         query = """SELECT * 
         FROM SF_CiclosLaminado WITH(NOLOCK)
@@ -16,7 +16,7 @@ class Acv:
         self.estados_acv = SqlUtilities.get_database_sf(query)
         # print(self.estados_acv) #Confirmación
 
-    @log_manager.log_errors
+    @log_manager.log_errors(sector = 'Estados ACV')
     def estado_acv(self):
         acv_ultimo_estado = self.estados_acv.loc[
             self.estados_acv.groupby("ID_acv")["Hora"].idxmax()

@@ -1,8 +1,8 @@
 from pymongo import MongoClient, collection, database, DESCENDING
 import logging  # Modulo estandar para registrar eventos en un archivo o consola.
-
 #MongoConnector es una clase que permite la conexión a servidor de NoSQL para consultar y/o
 #Insertar docuemntos para el almacenamiento de log_errors.
+
 
 class MongoConnector:
     def __init__(self, credentials: dict):
