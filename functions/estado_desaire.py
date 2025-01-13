@@ -120,8 +120,8 @@ class EstadoPiezas:
             'Vehiculo': 'No Encontrado',
             'Cliente' : 'No Encontrado',
             'Formula' : 'No Encontrado',
-            'TiemposDesaireacion': 0, 
-            'Criterio': 0
+            'TiemposDesaireacion': 999, 
+            'Criterio': 1
         })
         self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
 
@@ -131,6 +131,9 @@ class EstadoPiezas:
             columns={"Vehiculo_x": "Vehiculo", "Formula_x":"Formula"},
             inplace=True,
         )
+
+    def eliminar_piezas_nivel_0(self):
+        self.piezas_desaireadas = self.piezas_desaireadas[self.piezas_desaireadas["NivelAGP"] != 0]
 
     @log_manager.log_errors(sector = 'Estado desaireación')
     def tratamiento_datos(self):
@@ -146,6 +149,7 @@ class EstadoPiezas:
         self.determinar_criterio()
         self.traer_tiempos_a_calendario()
         self.limpiar_duplicados_tabla()
+        self.eliminar_piezas_nivel_0()
         return self.piezas_desaireadas
     
     @log_manager.log_errors(sector = 'Estado desaireación_BD_temporal')
