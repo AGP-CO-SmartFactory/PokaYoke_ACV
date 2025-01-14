@@ -33,20 +33,22 @@ class Cumplimiento_registro_embolsados:
                  """
         self.historico_embolsado = SqlUtilities.get_database_com(query_historico)
 
+    @log_manager.log_errors(sector = 'Verificar registros embolsa/desaire')
     def filtrar_keymodel(self):
         self.filtro_embolsa = self.historico_embolsado[self.historico_embolsado['CLV_MODEL'] == 'EMBOLSA']
         self.filtro_desaire = self.historico_embolsado[self.historico_embolsado['CLV_MODEL'] == 'DESAIRE']
 
+    @log_manager.log_errors(sector = 'Verificar registros embolsa/desaire')
     def criterio_registro_completo(self):
         self.ordenes_embolsa = set(self.filtro_embolsa['ORDEN'])
         self.ordenes_desaire = set(self.filtro_desaire['ORDEN'])
         self.ordenes_validas = self.ordenes_embolsa & self.ordenes_desaire
 
+    @log_manager.log_errors(sector = 'Verificar registros embolsa/desaire')
     def crear_df_ordenes_resultados(self):
         self.df_ordenes_validas = self.historico_embolsado[self.historico_embolsado['ORDEN'].isin(self.ordenes_validas)]
         self.df_ordenes_invalidas = self.historico_embolsado[~self.historico_embolsado['ORDEN'].isin(self.ordenes_validas)]
         
-    @log_manager.log_errors(sector = 'Verificar registros embolsa/desaire')
     def ejecutar_revision(self):
         self.filtrar_keymodel()
         self.criterio_registro_completo()

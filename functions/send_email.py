@@ -50,9 +50,10 @@ class SendEmail:
         """
         email = EmailMessage()
         email["From"] = remitente
-        destinatario = ["dbareno@agpglass.com", "ltovar@agpglass.com", "ebejarano@agpglass.com", "wrubio@agpglass.com", 
+        destinatario = ["dbareno@agpglass.com"]
+        """, "ltovar@agpglass.com", "ebejarano@agpglass.com", "wrubio@agpglass.com", 
                         "jogomez@agpglass.com", "xarodriguez@agpglass.com", "afgarcia@agpglass.com", "opinto@agpglass.com", 
-                        "fcastillo@agpglass.com"]
+                        "fcastillo@agpglass.com"]"""
         email["Subject"] = "Alerta NC Desaireacion ACV"
         email.add_alternative(mensaje, subtype="html")
 
