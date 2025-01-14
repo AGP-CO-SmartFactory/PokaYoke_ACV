@@ -135,6 +135,7 @@ class EstadoPiezas:
 
     def eliminar_piezas_nivel_0(self):
         self.piezas_desaireadas = self.piezas_desaireadas[self.piezas_desaireadas["AGPLevel"] != 0]
+        self.piezas_desaireadas = self.piezas_desaireadas[~self.piezas_desaireadas["Vehiculo"].str.contains("BMW X5 4D UTILITY")]
 
     @log_manager.log_errors(sector = 'Estado desaireación')
     def tratamiento_datos(self):
