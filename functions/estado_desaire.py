@@ -10,12 +10,13 @@ log_manager = LogManager()
 
 class EstadoPiezas:
 
+    @log_manager.log_errors(sector = 'Notificaciones Automáticas SAP')
     def __init__(self):
         query_cambioestado = """SELECT CAST(Orden AS INT) AS Orden, AGPLevel, TXT_MATERIAL, DATE_NOTIF, HRA_NOTIF, CLV_MODEL, DESC_CLIENTE, FormulaCOD 
         FROM 
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
-            DATE_NOTIF > DATEADD(day,-7, CAST(GETDATE() AS date))
+            DATE_NOTIF > DATEADD(day,-2, CAST(GETDATE() AS date))
             AND (CLV_MODEL = 'EMBOLSA')
             AND ANULADO <> 'X'
             AND CTD_BUENA <> '1.000-'
@@ -133,7 +134,7 @@ class EstadoPiezas:
         )
 
     def eliminar_piezas_nivel_0(self):
-        self.piezas_desaireadas = self.piezas_desaireadas[self.piezas_desaireadas["NivelAGP"] != 0]
+        self.piezas_desaireadas = self.piezas_desaireadas[self.piezas_desaireadas["AGPLevel"] != 0]
 
     @log_manager.log_errors(sector = 'Estado desaireación')
     def tratamiento_datos(self):
