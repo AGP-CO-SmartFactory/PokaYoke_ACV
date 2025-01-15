@@ -39,13 +39,14 @@ class LogManager:
                             "Proceso": f"{class_name}.{method_name}",
                             "Anomalia": "Se ha producido una excepción en el código",
                             "Error": error_message,
-                            "FechaCreacion": timestamp.isoformat(),
+                            "FechaCreacion": datetime.now(),
                         }
 
                         #loguear el error en archivo
                         self.logger.error(f"{error_document}")
-
-                        #collection.insert_one(error_document)
+                        
+                        self_mongo = MongoConnector()
+                        MongoConnector.insert_single_document(self_mongo, error_document)
 
                         raise e  #Re-lanzar la excepción
                 return wrapper
