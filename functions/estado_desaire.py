@@ -38,14 +38,17 @@ class EstadoPiezas:
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
         self.retrabajos = SqlUtilities.get_database_com(query_retrabajos)
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def filtrar_piezas_cambioestado(self): #esto con el fin de solo obtener las piezas que estén en el puesto de trabajo
         self.piezas_desaireadas = self.calendario[self.calendario['Orden'].isin(self.cambioestado['Orden'])]
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def añadir_columna_datetime(self):
         self.cambioestado["Date_Registro"] = pd.to_datetime(
             self.cambioestado["DATE_NOTIF"] + " " + self.cambioestado["HRA_NOTIF"]
         )
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def crear_dataframe_embolsado(self):
         self.df_embolsado = self.cambioestado[
             self.cambioestado["CLV_MODEL"] == "EMBOLSA"
@@ -53,12 +56,14 @@ class EstadoPiezas:
             columns={"Date_Registro": "RegistroEmbolsa"}
         )
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def crear_dataframe_desaire(self):
         self.df_desaire = self.calendario[["Orden", "NivelAGP", "Vehiculo", "FechaRegistro", 'ClienteDespacho', 'Formula']].rename(
             columns={"FechaRegistro": "RegistroDesaire", "ClienteDespacho" : "Cliente"}
         )
 
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def merge_dataframes(self):
         self.df_merged = pd.merge(
             self.df_embolsado, self.df_desaire, on="Orden", how="left"
@@ -69,16 +74,19 @@ class EstadoPiezas:
             inplace=True,
         )
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def filtrar_merged(self):
         self.df_merged = self.df_merged[
             (self.df_merged["RegistroDesaire"].notnull())
             & (self.df_merged["RegistroDesaire"] > self.df_merged["RegistroEmbolsa"])
         ]
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def limpiar_agp_level(self):
         self.df_merged['AGPLevel'] = self.df_merged['AGPLevel'].replace('NA', None)
         self.df_merged = self.df_merged.dropna(subset=['AGPLevel'])
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def calcular_tiempo_desaireacion(self):
         self.df_merged["TiemposDesaireacion"] = (
             (
@@ -87,6 +95,7 @@ class EstadoPiezas:
             / 60
         ) + 5
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def determinar_criterio(self):
         ordenes_retrabajos = set(self.retrabajos['Orden'])
         self.df_merged["Criterio"] = self.df_merged.apply(
@@ -112,6 +121,7 @@ class EstadoPiezas:
             axis=1,
         )
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def traer_tiempos_a_calendario(self):
         self.piezas_desaireadas = self.piezas_desaireadas.merge(self.df_merged, on = 'Orden', how='left')
         self.piezas_desaireadas = self.piezas_desaireadas.drop_duplicates(subset = ['Orden'], inplace=False)
@@ -126,6 +136,7 @@ class EstadoPiezas:
         })
         self.piezas_desaireadas['Criterio'] = self.piezas_desaireadas['Criterio'].astype(int)
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def limpiar_duplicados_tabla(self):
         self.piezas_desaireadas.drop(columns=["NivelAGP_x", "FechaRegistro", "ClienteDespacho", "Formula_y", "NivelAGP_y", "Vehiculo_y"], inplace=True)
         self.piezas_desaireadas.rename(
@@ -133,13 +144,12 @@ class EstadoPiezas:
             inplace=True,
         )
 
+    @log_manager.log_errors(sector = 'Estado desaireación')
     def eliminar_piezas_nivel_0(self):
         self.piezas_desaireadas = self.piezas_desaireadas[self.piezas_desaireadas["AGPLevel"] != 0]
         self.piezas_desaireadas = self.piezas_desaireadas[~self.piezas_desaireadas["Vehiculo"].str.contains("BMW X5 4D UTILITY")]
-
-    @log_manager.log_errors(sector = 'Estado desaireación')
+  
     def tratamiento_datos(self):
-
         self.filtrar_piezas_cambioestado()
         self.añadir_columna_datetime()
         self.crear_dataframe_embolsado()
