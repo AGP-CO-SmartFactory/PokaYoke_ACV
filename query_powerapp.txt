@@ -1,0 +1,93 @@
+ClearCollect(RegistroEmbolsado; 
+    First(SortByColumns(
+        Filter(VW_CAMBIOESTADO; 
+            ORDEN = Value(TextInput_OP_ID.Text) And "EMBOLSA" in CLV_MODEL); 
+        "DATE_NOTIF"; 
+        "Descending"
+    ))
+);;
+
+Set(HRA_NOTIF; Text(First(RegistroEmbolsado).HRA_NOTIF));;
+
+// Eliminar "PT" al inicio de la cadena si está presente
+Set(HRA_NOTIF; If(
+    StartsWith(HRA_NOTIF; "PT"); 
+    Mid(HRA_NOTIF; 3; Len(HRA_NOTIF) - 2); 
+    HRA_NOTIF
+));;
+
+// Inicializar las variables de horas, minutos y segundos
+Set(Horas; 0);;
+Set(Minutos; 0);;
+Set(Segundos; 0);;
+
+// Verificar si las horas están presentes y extraerlas
+If(
+    !IsBlank(Find("H"; HRA_NOTIF)); // Si "H" está presente
+    Set(Horas; Value(Mid(HRA_NOTIF; 1; Find("H"; HRA_NOTIF) - 1))) // Extraer horas
+);;
+
+// Verificar si los minutos están presentes y extraerlos
+If(
+    !IsBlank(Find("M"; HRA_NOTIF)); // Si "M" está presente
+    Set(Minutos; Value(Mid(HRA_NOTIF; Find("H"; HRA_NOTIF) + 1; Find("M"; HRA_NOTIF) - Find("H"; HRA_NOTIF) - 1))) // Extraer minutos
+);;
+
+// Verificar si los segundos están presentes y extraerlos
+If(
+    !IsBlank(Find("S"; HRA_NOTIF)); // Si "S" está presente
+    Set(Segundos; Value(Mid(HRA_NOTIF; If(IsBlank(Find("M"; HRA_NOTIF)); Find("H"; HRA_NOTIF) + 1; Find("M"; HRA_NOTIF) + 1); Find("S"; HRA_NOTIF) - If(IsBlank(Find("M"; HRA_NOTIF)); Find("H"; HRA_NOTIF) + 1; Find("M"; HRA_NOTIF) + 1) - 1))) // Extraer segundos
+);;
+Set(Segundos; 00);;
+// Asegurarse de que la hora esté en formato hh:mm:ss
+Set(HoraFormateada; Text(Horas; "00") & ":" & Text(Minutos; "00") & ":" & Text(Segundos; "00"));;
+
+// Combinar la fecha y la hora formateada
+Set(FechaNotif; DateTimeValue(Text(First(RegistroEmbolsado).DATE_NOTIF) & " " & HoraFormateada));;
+
+// Calcular la diferencia en minutos
+Set(DiferenciaMinutos; DateDiff(Now(); FechaNotif; TimeUnit.Minutes));;
+
+// Definir el tiempo establecido basado en las condiciones
+Set(
+    TiempoEstablecido;
+    If(
+        StartsWith(First(RegistroEmbolsado).DESC_CLIENTE; "URO"); 240;
+        If(
+            StartsWith(First(RegistroEmbolsado).DESC_CLIENTE; "BENTELER"); 120;
+            If(
+                StartsWith(First(RegistroEmbolsado).FormulaCod; "LL"); 
+                120; 
+                If(
+                    First(RegistroEmbolsado).AGPLevel in ["05"; "06"; "07"; "08"]; 
+                    120; 
+                    0
+                )
+            )
+        )
+    )
+);;
+
+// Calcular el tiempo restante
+Set(
+    TiempoRestante; 
+    DiferenciaMinutos + TiempoEstablecido
+);;
+
+//Patch para subir a base datos cargue auto_SAP
+If(TiempoRestante < 0;
+    Patch(
+        SF_Cargue_SAP_Desaire;
+        Defaults(SF_Cargue_SAP_Desaire);
+        {
+            Orden: Value(TextInput_OP_ID.Text);
+            Id_operario: Value(TextInput_employee_ID.Text);
+            Cargado_SAP: 0;
+            Fecha_cargue_PowerAPP: Now()
+        }
+    )
+);;
+
+
+Set(TimerStart; false);;
+Set(TimerStart; true);;
