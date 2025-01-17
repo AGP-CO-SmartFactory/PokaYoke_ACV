@@ -226,7 +226,7 @@ class EstadoPiezas:
             """
             SqlUtilities.insert_database_sf(query)
 
-
+#Esta clase se encarga de retorna un DF dónde el criterio de piezas en desaireación sea 0
 class AlarmaDesaireacion:
 
     @log_manager.log_errors(sector="Alarma desaireación")
