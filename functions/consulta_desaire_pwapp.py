@@ -13,7 +13,7 @@ class BdPowerApp:
     def piezas_sin_cargar(self):
         query = """SELECT * 
         FROM SF_Cargue_SAP_Desaire WITH(NOLOCK)
-        WHERE Fecha_cargue_PowerAPP > DATEADD(day, -5, CAST(GETDATE() AS date))
+        WHERE Fecha_cargue_PowerAPP > DATEADD(day, -5, CAST(GETDATE() AS date)) AND
         Cargado_SAP = 0
         """
         self.piezas_sin_cargue_SAP = SqlUtilities.get_database_sf(query)
