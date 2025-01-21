@@ -139,7 +139,7 @@ class EstadoPiezas:
                     and row["TiemposDesaireacion"] < 120
                 )
                 or (
-                    str(row["Formula"]).startswith("LL")
+                    (str(row["Formula"]).startswith("LL") or str(row["Formula"]).startswith("NP"))
                     and row["TiemposDesaireacion"] < 120
                 )
             ):
@@ -191,7 +191,7 @@ class EstadoPiezas:
         )
 
     @log_manager.log_errors(sector="Estado desaireación")
-    def eliminar_piezas_nivel_0(self):
+    def eliminar_piezas_criterios_especificos(self):
         self.piezas_desaireadas = self.piezas_desaireadas[
             self.piezas_desaireadas["AGPLevel"] != 0
         ]
@@ -211,7 +211,7 @@ class EstadoPiezas:
         self.determinar_criterio()
         self.traer_tiempos_a_calendario()
         self.limpiar_duplicados_tabla()
-        self.eliminar_piezas_nivel_0()
+        self.eliminar_piezas_criterios_especificos()
         return self.piezas_desaireadas
 
     @log_manager.log_errors(sector="Estado desaireación_BD_temporal")
