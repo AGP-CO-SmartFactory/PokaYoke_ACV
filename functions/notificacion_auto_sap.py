@@ -39,7 +39,7 @@ class auto_sap:
     def sap_connection_login(self):
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
-        connection = application.OpenConnection("QAS 2023", True)
+        connection = application.OpenConnection("AGP ERP PRD O2", True)
         self.session = connection.Children(0)
         return self.session
         # Esta función retorna un objeto que da acceso de todas las ventanas abiertas de sap al script para iniciar sesion
