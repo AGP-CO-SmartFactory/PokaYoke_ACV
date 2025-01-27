@@ -33,7 +33,7 @@ class EstadoPiezas:
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
             DATE_NOTIF > DATEADD(day,-30, CAST(GETDATE() AS date))
-            AND (DEFECTO = 'Resistencia fuera de tolerancia' OR DEFECTO = 'Borde paquete no uniforme')
+            AND (DEFECTO = 'Resistencia fuera de tolerancia' OR DEFECTO = 'Borde paquete no uniforme' OR DEFECTO = 'MALLA F.T')
             AND TIPO_NOTIF <> 'RECHAZO' """
         self.cambioestado = SqlUtilities.get_database_com(query_cambioestado)
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
@@ -191,6 +191,21 @@ class EstadoPiezas:
         )
 
     @log_manager.log_errors(sector="Estado desaireación")
+    def identificar_registros_laminados(self):
+        self.cambioestado = self.cambioestado.sort_values(by=['Orden', 'DATE_NOTIF'])
+        
+        #Verificar si el registro actual y el siguiente tienen la misma Orden
+        self.cambioestado['EsConsecutivo'] = (
+            self.cambioestado['Orden'] == self.cambioestado['Orden'].shift(-1)  # Misma Orden con la siguiente fila
+        )
+        #Filtrar órdenes con registros consecutivos
+        ordenes_con_duplicados = self.cambioestado[self.cambioestado['EsConsecutivo']]['Orden'].drop_duplicates()
+        self.ordenes_registro_laminado = pd.DataFrame({'Orden': ordenes_con_duplicados})
+
+        return self.ordenes_registro_laminado
+
+
+    @log_manager.log_errors(sector="Estado desaireación")
     def eliminar_piezas_criterios_especificos(self):
         self.piezas_desaireadas = self.piezas_desaireadas[
             self.piezas_desaireadas["AGPLevel"] != 0
@@ -198,6 +213,15 @@ class EstadoPiezas:
         self.piezas_desaireadas = self.piezas_desaireadas[
             ~self.piezas_desaireadas["Vehiculo"].str.contains("BMW X5 4D UTILITY")
         ]
+
+        """ordenes_a_eliminar = self.ordenes_registro_laminado.loc[
+            self.ordenes_registro_laminado['EsConsecutivo'] == True, 'Orden'
+        ]
+        
+        #Eliminar las órdenes duplicadas de piezas_desaireadas
+        self.piezas_desaireadas = self.piezas_desaireadas[
+            ~self.piezas_desaireadas["Orden"].isin(ordenes_a_eliminar)
+        ]"""
 
     def tratamiento_datos(self):
         self.filtrar_piezas_cambioestado()
@@ -211,6 +235,7 @@ class EstadoPiezas:
         self.determinar_criterio()
         self.traer_tiempos_a_calendario()
         self.limpiar_duplicados_tabla()
+        #self.identificar_registros_laminados()
         self.eliminar_piezas_criterios_especificos()
         return self.piezas_desaireadas
 
