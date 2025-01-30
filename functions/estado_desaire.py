@@ -192,17 +192,9 @@ class EstadoPiezas:
 
     @log_manager.log_errors(sector="Estado desaireación")
     def identificar_registros_laminados(self):
-        self.cambioestado = self.cambioestado.sort_values(by=['Orden', 'DATE_NOTIF'])
-        
-        #Verificar si el registro actual y el siguiente tienen la misma Orden
-        self.cambioestado['EsConsecutivo'] = (
-            self.cambioestado['Orden'] == self.cambioestado['Orden'].shift(-1)  # Misma Orden con la siguiente fila
-        )
-        #Filtrar órdenes con registros consecutivos
-        ordenes_con_duplicados = self.cambioestado[self.cambioestado['EsConsecutivo']]['Orden'].drop_duplicates()
-        self.ordenes_registro_laminado = pd.DataFrame({'Orden': ordenes_con_duplicados})
+        self.laminados = self.cambioestado.groupby('Orden').size().reset_index(name='Conteo') #Realiza un mapeo de los ultimos registros de embolsado durante dos días
+        self.laminados = self.laminados[self.laminados['Conteo']>1]
 
-        return self.ordenes_registro_laminado
 
 
     @log_manager.log_errors(sector="Estado desaireación")
@@ -213,15 +205,9 @@ class EstadoPiezas:
         self.piezas_desaireadas = self.piezas_desaireadas[
             ~self.piezas_desaireadas["Vehiculo"].str.contains("BMW X5 4D UTILITY")
         ]
-
-        """ordenes_a_eliminar = self.ordenes_registro_laminado.loc[
-            self.ordenes_registro_laminado['EsConsecutivo'] == True, 'Orden'
-        ]
-        
-        #Eliminar las órdenes duplicadas de piezas_desaireadas
         self.piezas_desaireadas = self.piezas_desaireadas[
-            ~self.piezas_desaireadas["Orden"].isin(ordenes_a_eliminar)
-        ]"""
+            ~self.piezas_desaireadas['Orden'].isin(self.laminados['Orden'])
+            ]
 
     def tratamiento_datos(self):
         self.filtrar_piezas_cambioestado()
@@ -235,7 +221,7 @@ class EstadoPiezas:
         self.determinar_criterio()
         self.traer_tiempos_a_calendario()
         self.limpiar_duplicados_tabla()
-        #self.identificar_registros_laminados()
+        self.identificar_registros_laminados()
         self.eliminar_piezas_criterios_especificos()
         return self.piezas_desaireadas
 
