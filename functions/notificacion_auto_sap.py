@@ -14,7 +14,6 @@ log_manager = LogManager()
 
 class auto_sap:
 
-    @log_manager.log_errors(sector = 'Notificaciones Automáticas SAP')
     def __init__(self):
         self.self_papp = BdPowerApp()
         self.df_sin_cargar = pd.DataFrame(
