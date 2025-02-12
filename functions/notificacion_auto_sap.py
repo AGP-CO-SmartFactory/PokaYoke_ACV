@@ -50,7 +50,7 @@ class auto_sap:
             self.sap_connection_login()
             self.session.findById("wnd[0]").maximize()
             self.session.findById("wnd[0]/usr/txtRSYST-BNAME").text = "DBARENO"
-            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").text = "Dibar461...."
+            self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").text = "Dibar461*"
             self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").setFocus()
             self.session.findById("wnd[0]/usr/pwdRSYST-BCODE").caretPosition = 8
             self.session.findById("wnd[0]").sendVKey(0)
