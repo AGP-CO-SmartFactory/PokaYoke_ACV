@@ -33,7 +33,7 @@ class EstadoPiezas:
             VW_CAMBIOESTADO WITH(NOLOCK)
         WHERE 
             DATE_NOTIF > DATEADD(day,-30, CAST(GETDATE() AS date))
-            AND (DEFECTO = 'Resistencia fuera de tolerancia' OR DEFECTO = 'Borde paquete no uniforme' OR DEFECTO = 'MALLA F.T' OR DEFECTO = 'Burbujas En Paquete' OR DEFECTO = 'Burbuja')
+            AND (DEFECTO = 'Resistencia fuera de tolerancia' OR DEFECTO = 'Borde paquete no uniforme' OR DEFECTO = 'MALLA F.T' OR DEFECTO = 'Burbujas En Paquete' OR DEFECTO = 'Burbuja' OR DEFECTO = 'PC Expuesto')
             AND TIPO_NOTIF <> 'RECHAZO' """
         self.cambioestado = SqlUtilities.get_database_com(query_cambioestado)
         self.calendario = SqlUtilities.get_database_cal(query_calendario)
